@@ -11,5 +11,8 @@ venv/
 #environment files
 *.env
 
+#python cache
+__pycache__/
+
 
 
