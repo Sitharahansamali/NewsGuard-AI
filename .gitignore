@@ -1,0 +1,10 @@
+#models 
+*.pth
+*.pt
+
+#logs
+*.log
+
+#venv
+venv/
+
