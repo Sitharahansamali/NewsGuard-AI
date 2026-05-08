@@ -1,9 +1,6 @@
 import streamlit as st
 import requests
 
-# Page Title
-st.set_page_config(page_title="Fake News Detection AI")
-
 st.title("Fake News Detection AI")
 st.write("Enter a news article or headline to check whether it is Fake or Real.")
 
