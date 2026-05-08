@@ -35,7 +35,7 @@ debugpy @ file:///C:/miniconda3/conda-bld/debugpy_1762421656989/work
 decorator @ file:///C:/Users/dev-admin/buildout/croot/decorator_1759956412694/work
 defusedxml @ file:///tmp/build/80754af9/defusedxml_1615228127516/work
 dill==0.4.1
-dnspython==2.8.0
+dnspython==1.16.0
 executing @ file:///C:/Users/dev-admin/buildout/croot/executing_1761985455628/work
 fastapi==0.136.1
 fastjsonschema @ file:///C:/miniconda3/conda-bld/python-fastjsonschema_1763718678445/work
@@ -116,10 +116,11 @@ pydantic==2.13.4
 pydantic_core==2.46.4
 pydeck==0.9.2
 Pygments @ file:///C:/Users/task_177512697712397/croot/pygments_1775127052270/work
-pymongo==4.17.0
+pymongo==3.12.0
 pyparsing==3.3.2
 PySocks @ file:///C:/miniconda3/conda-bld/pysocks_1761753029698/work
 python-dateutil @ file:///C:/Users/dev-admin/buildout/croot/python-dateutil_1759954839763/work
+python-dotenv==1.2.2
 python-json-logger @ file:///C:/miniconda3/conda-bld/python-json-logger_1764590137051/work
 python-multipart==0.0.27
 pywin32 @ file:///C:/Users/dev-admin/buildout/croot/pywin32_1759953972432/work
