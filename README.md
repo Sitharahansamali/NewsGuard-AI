@@ -32,7 +32,7 @@ AI-powered fake news detection web application using Machine Learning, FastAPI, 
 # Project Structure
 
 ```text
-fake-news-ai/
+NewsGuard_AI/
 │
 ├── data/
 ├── notebooks/
@@ -54,7 +54,7 @@ git clone <your-github-repository-link>
 ```
 
 ```bash
-cd fake-news-ai
+cd NewsGuard_AI
 ```
 
 ---
