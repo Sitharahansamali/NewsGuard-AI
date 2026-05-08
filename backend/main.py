@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from nltk import probability
 from schemas import NewsRequest
 from database import prediction_collection
 import pickle
@@ -31,6 +32,10 @@ def predict_news(request: NewsRequest):
     # Predict
     prediction = model.predict(vector)[0]
 
+    # Get prediction probability
+    probability = model.predict_proba(vector)[0]
+    confidence = max(probability)
+
     # Convert prediction to label
     result = "Real News" if prediction == 1 else "Fake News"
 
@@ -38,9 +43,11 @@ def predict_news(request: NewsRequest):
     prediction_collection.insert_one({
         "news": text,
         "prediction": result,
+        "confidence": round(confidence * 100, 3),
         "created_at": datetime.utcnow()
     })
 
     return {
-        "prediction": result
+        "prediction": result,
+        "confidence": round(confidence * 100, 3)
     }
