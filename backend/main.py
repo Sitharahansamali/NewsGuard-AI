@@ -26,34 +26,24 @@ def home():
 
 
 @app.post("/predict")
-def predict_news(request: NewsRequest):
+def predict_news(text: str):
 
-    text = request.text
-
-    # Convert text to vector
     vector = vectorizer.transform([text])
 
-    # Predict
     prediction = model.predict(vector)[0]
 
-    # Get prediction probability
-    probability = model.predict_proba(vector)[0]
-    confidence = max(probability)
+    probabilities = model.predict_proba(vector)[0]
 
-    # Convert prediction to label
-    result = "Real News" if prediction == 1 else "Fake News"
+    confidence = float(max(probabilities))
 
-    # Store in MongoDB
-    prediction_collection.insert_one({
-        "news": text,
-        "prediction": result,
-        "confidence": round(confidence * 100, 3),
-        "created_at": datetime.utcnow()
-    })
+    if prediction == 1:
+        final_prediction = "Real News"
+    else:
+        final_prediction = "Fake News"
 
     return {
-        "prediction": result,
-        "confidence": round(confidence * 100, 3)
+        "prediction": final_prediction,
+        "confidence": confidence
     }
 
 @app.post("/predict_url")
