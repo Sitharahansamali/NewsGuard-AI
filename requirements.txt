@@ -28,6 +28,7 @@ colorama @ file:///C:/Users/dev-admin/buildout/croot/colorama_1759952627215/work
 comm @ file:///C:/Users/dev-admin/buildout/croot/comm_1763637613849/work
 confection==1.3.3
 contourpy==1.3.3
+cssselect==1.4.0
 cycler==0.12.1
 cymem==2.0.13
 datasets==4.8.5
@@ -39,6 +40,8 @@ dnspython==1.16.0
 executing @ file:///C:/Users/dev-admin/buildout/croot/executing_1761985455628/work
 fastapi==0.136.1
 fastjsonschema @ file:///C:/miniconda3/conda-bld/python-fastjsonschema_1763718678445/work
+feedfinder2==0.0.4
+feedparser==6.0.12
 filelock==3.29.0
 fonttools==4.62.1
 fqdn==1.5.1
@@ -60,6 +63,7 @@ ipython_pygments_lexers @ file:///C:/Users/dev-admin/buildout/croot/ipython_pygm
 isoduration==20.11.0
 itsdangerous==2.2.0
 jedi @ file:///C:/Users/dev-admin/buildout/croot/jedi_1759956512541/work
+jieba3k==0.35.1
 Jinja2 @ file:///C:/Users/dev-admin/buildout/croot/jinja2_1761938590194/work
 joblib==1.5.3
 json5 @ file:///C:/miniconda3/conda-bld/json5_1763718615838/work
@@ -77,6 +81,8 @@ jupyterlab_pygments @ file:///C:/Users/dev-admin/buildout/croot/jupyterlab_pygme
 jupyterlab_server @ file:///C:/Users/task_176962933081313/croot/jupyterlab_server_1769629913304/work
 kiwisolver==1.5.0
 lark==1.3.1
+lxml==6.1.0
+lxml_html_clean==0.4.4
 markdown-it-py==4.2.0
 MarkupSafe @ file:///C:/Users/dev-admin/buildout/croot/markupsafe_1759955189290/work
 matplotlib==3.10.9
@@ -93,6 +99,8 @@ nbconvert @ file:///C:/Users/task_177212127228850/croot/nbconvert-meta_177212133
 nbformat @ file:///C:/Users/dev-admin/buildout/croot/nbformat_1759955312591/work
 nest-asyncio @ file:///tmp/build/80754af9/nest-asyncio_1613680548246/work
 networkx==3.6.1
+newsapi-python==0.2.7
+newspaper3k==0.2.8
 nltk==3.9.4
 notebook @ file:///C:/Users/task_177513867248953/croot/notebook_1775139393313/work
 notebook_shim @ file:///C:/Users/task_176962940553730/croot/notebook-shim_1769629901712/work
@@ -130,6 +138,7 @@ pyzmq @ file:///C:/miniconda3/conda-bld/pyzmq_1762375620799/work
 referencing @ file:///C:/miniconda3/conda-bld/referencing_1762536906066/work
 regex==2026.4.4
 requests @ file:///C:/Users/task_177506611932238/croot/requests_1775066190807/work
+requests-file==3.0.1
 rfc3339_validator @ file:///C:/miniconda3/conda-bld/rfc3339-validator_1764775658359/work
 rfc3986_validator @ file:///C:/Users/dev-admin/buildout/croot/rfc3986-validator_1762547083442/work
 rfc3987-syntax==1.1.0
@@ -141,6 +150,7 @@ scipy==1.17.1
 seaborn==0.13.2
 Send2Trash @ file:///C:/Users/task_176817069691338/croot/send2trash_1768170819395/work
 setuptools==81.0.0
+sgmllib3k==1.0.0
 shellingham==1.5.4
 six @ file:///C:/Users/dev-admin/buildout/croot/six_1759954493303/work
 smart_open==7.6.0
@@ -159,6 +169,8 @@ terminado @ file:///C:/Users/task_176959127836768/croot/terminado_1769591780553/
 thinc==8.3.13
 threadpoolctl==3.6.0
 tinycss2==1.4.0
+tinysegmenter==0.3
+tldextract==5.3.1
 tokenizers==0.22.2
 toml==0.10.2
 torch==2.11.0
