@@ -18,12 +18,15 @@ if st.button("Predict News"):
 
     result = response.json()
 
-    prediction = "Real News" if result["prediction"] == 1 else "Fake News"
+    st.write(result)
+
+    prediction = result["prediction"]
 
     st.success(prediction)
 
     st.info(
-        f"Confidence: {result['confidence']*100:.2f}%"
+        f"Confidence: "
+        f"{result['confidence']*100:.2f}%"
     )
 
 
