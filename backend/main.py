@@ -41,6 +41,13 @@ def predict_news(text: str):
     else:
         final_prediction = "Fake News"
 
+    #save prediction to database
+    prediction_collection.insert_one({
+        "text": text,
+        "prediction": final_prediction,
+        "timestamp": datetime.utcnow()
+    })
+
     return {
         "prediction": final_prediction,
         "confidence": confidence
