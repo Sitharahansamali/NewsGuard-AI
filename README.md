@@ -81,19 +81,6 @@ pip install -r requirements.txt
 
 ---
 
-# Run Jupyter Notebook
-
-```bash
-jupyter notebook
-```
-
-Open:
-
-```text
-notebooks/model_training.ipynb
-```
-
----
 
 # Run FastAPI Backend
 
