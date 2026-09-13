@@ -1,18 +1,22 @@
-#models 
-*.pth
-*.pt
-
-#logs
-*.log
-
-#venv
-venv/
-
-#environment files
-*.env
-
-#python cache
+# Python
 __pycache__/
+*.py[cod]
 
+# Environments
+.venv/
+venv/
+.env
+
+# ML models / generated artifacts
+models/*.pkl
+
+# Processed data
+data/processed/
+
+# MLflow
+mlruns/
+
+# Jupyter
+.ipynb_checkpoints/
 
 
