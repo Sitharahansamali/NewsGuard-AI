@@ -3,26 +3,22 @@ from pathlib import Path
 import joblib
 import mlflow
 import mlflow.sklearn
+from mlflow import MlflowClient
 import pandas as pd
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (
-    accuracy_score,
-    classification_report,
-    f1_score,
-    precision_score,
-    recall_score,
-)
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
 
 from newsguard.features.preprocessing import clean_text
 
 
 # ============================================================
-# Paths
+# Project paths
 # ============================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -30,503 +26,411 @@ PROJECT_ROOT = Path(__file__).resolve().parents[3]
 FAKE_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "Fake.csv"
 TRUE_DATA_PATH = PROJECT_ROOT / "data" / "raw" / "True.csv"
 
-MODEL_DIR = PROJECT_ROOT / "models"
+MODELS_DIR = PROJECT_ROOT / "models"
+MODELS_DIR.mkdir(exist_ok=True)
 
-MODEL_DIR.mkdir(
-    parents=True,
-    exist_ok=True
+
+# ============================================================
+# MLflow configuration
+# ============================================================
+
+MLFLOW_TRACKING_URI = "sqlite:///./mlflow.db"
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+
+EXPERIMENT_NAME = "NewsGuard AI - Fake News Classification"
+
+mlflow.set_experiment(EXPERIMENT_NAME)
+
+MODEL_NAME = "NewsGuard-Fake-News-Classifier"
+CHAMPION_ALIAS = "champion"
+
+mlflow_client = MlflowClient()
+
+
+# ============================================================
+# Load data
+# ============================================================
+
+print("Loading datasets...")
+
+fake = pd.read_csv(FAKE_DATA_PATH)
+true = pd.read_csv(TRUE_DATA_PATH)
+
+fake["label"] = 0
+true["label"] = 1
+
+data = pd.concat([fake, true], ignore_index=True)
+
+data = data.sample(
+    frac=1,
+    random_state=42
+).reset_index(drop=True)
+
+
+# ============================================================
+# Prepare text
+# ============================================================
+
+data["content"] = (
+    data["title"].fillna("")
+    + " "
+    + data["text"].fillna("")
+)
+
+data["content"] = data["content"].apply(clean_text)
+
+X = data["content"]
+y = data["label"]
+
+
+# ============================================================
+# Train / test split
+# ============================================================
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y,
 )
 
 
 # ============================================================
-# MLflow Configuration
+# Models
 # ============================================================
 
-MLFLOW_DB = PROJECT_ROOT / "mlflow.db"
-
-MLFLOW_TRACKING_URI = (
-    f"sqlite:///{MLFLOW_DB.as_posix()}"
-)
-
-mlflow.set_tracking_uri(
-    MLFLOW_TRACKING_URI
-)
-
-EXPERIMENT_NAME = (
-    "NewsGuard AI - Fake News Classification"
-)
-
-mlflow.set_experiment(
-    EXPERIMENT_NAME
-)
-
-
-# ============================================================
-# Load Dataset
-# ============================================================
-
-def load_data():
-
-    print("Loading datasets...")
-
-    fake = pd.read_csv(
-        FAKE_DATA_PATH
-    )
-
-    true = pd.read_csv(
-        TRUE_DATA_PATH
-    )
-
-    fake["label"] = 0
-    true["label"] = 1
-
-    data = pd.concat(
-        [fake, true],
-        ignore_index=True
-    )
-
-    data = data.sample(
-        frac=1,
-        random_state=42
-    ).reset_index(drop=True)
-
-    print(
-        f"Total samples: {len(data)}"
-    )
-
-    return data
-
-
-# ============================================================
-# Prepare Text
-# ============================================================
-
-def prepare_text(data):
-
-    data["content"] = (
-        data["title"].fillna("")
-        + " "
-        + data["text"].fillna("")
-    )
-
-    print("Cleaning text...")
-
-    data["cleaned_content"] = (
-        data["content"].apply(clean_text)
-    )
-
-    return data
-
-
-# ============================================================
-# Evaluate Model
-# ============================================================
-
-def evaluate_model(
-    model,
-    X_test,
-    y_test,
-    model_name
-):
-
-    predictions = model.predict(
-        X_test
-    )
-
-    accuracy = accuracy_score(
-        y_test,
-        predictions
-    )
-
-    precision = precision_score(
-        y_test,
-        predictions,
-        zero_division=0
-    )
-
-    recall = recall_score(
-        y_test,
-        predictions,
-        zero_division=0
-    )
-
-    f1 = f1_score(
-        y_test,
-        predictions,
-        zero_division=0
-    )
-
-    print("\n" + "=" * 60)
-    print(model_name)
-    print("=" * 60)
-
-    print(
-        f"Accuracy : {accuracy:.4f}"
-    )
-
-    print(
-        f"Precision: {precision:.4f}"
-    )
-
-    print(
-        f"Recall   : {recall:.4f}"
-    )
-
-    print(
-        f"F1 Score : {f1:.4f}"
-    )
-
-    report = classification_report(
-        y_test,
-        predictions,
-        target_names=[
-            "Fake News",
-            "Real News"
-        ],
-        zero_division=0
-    )
-
-    print("\nClassification Report:")
-    print(report)
-
-    return {
-        "accuracy": accuracy,
-        "precision": precision,
-        "recall": recall,
-        "f1_score": f1,
-        "classification_report": report,
-    }
-
-
-# ============================================================
-# Main Training Pipeline
-# ============================================================
-
-def train_models():
-
-    # --------------------------------------------------------
-    # 1. Load data
-    # --------------------------------------------------------
-
-    data = load_data()
-
-    # --------------------------------------------------------
-    # 2. Prepare text
-    # --------------------------------------------------------
-
-    data = prepare_text(data)
-
-    X = data["cleaned_content"]
-
-    y = data["label"]
-
-    # --------------------------------------------------------
-    # 3. Train / Test Split
-    # --------------------------------------------------------
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
-        test_size=0.2,
+models = {
+    "Logistic Regression": LogisticRegression(
+        max_iter=1000,
         random_state=42,
-        stratify=y
-    )
+    ),
 
-    print(
-        f"\nTraining samples: {len(X_train)}"
-    )
+    "Multinomial Naive Bayes": MultinomialNB(),
 
-    print(
-        f"Testing samples: {len(X_test)}"
-    )
+    "Random Forest": RandomForestClassifier(
+        n_estimators=200,
+        max_depth=30,
+        random_state=42,
+        n_jobs=-1,
+    ),
+}
 
-    # --------------------------------------------------------
-    # 4. TF-IDF
-    # --------------------------------------------------------
 
-    print(
-        "\nCreating TF-IDF features..."
-    )
+# ============================================================
+# Train models
+# ============================================================
 
-    vectorizer = TfidfVectorizer(
-        max_features=10000
-    )
+results = []
 
-    X_train_tfidf = vectorizer.fit_transform(
-        X_train
-    )
 
-    X_test_tfidf = vectorizer.transform(
-        X_test
-    )
+for model_name, classifier in models.items():
 
-    print(
-        f"TF-IDF shape: {X_train_tfidf.shape}"
-    )
+    print(f"\nTraining {model_name}...")
 
-    # --------------------------------------------------------
-    # 5. Models
-    # --------------------------------------------------------
-
-    models = {
-
-        "Logistic Regression":
-            LogisticRegression(
-                max_iter=1000,
-                random_state=42
+    # Complete ML pipeline
+    pipeline = Pipeline([
+        (
+            "tfidf",
+            TfidfVectorizer(
+                max_features=10000
             ),
+        ),
+        (
+            "classifier",
+            classifier,
+        ),
+    ])
 
-        "Multinomial Naive Bayes":
-            MultinomialNB(),
+    with mlflow.start_run(run_name=model_name):
 
-        "Random Forest":
-            RandomForestClassifier(
-                n_estimators=200,
-                random_state=42,
-                n_jobs=-1
-            ),
-    }
+        # ----------------------------------------------------
+        # Train
+        # ----------------------------------------------------
 
-    # --------------------------------------------------------
-    # 6. Train each model
-    # --------------------------------------------------------
+        pipeline.fit(X_train, y_train)
 
-    all_results = {}
+        # ----------------------------------------------------
+        # Predict
+        # ----------------------------------------------------
 
-    for model_name, model in models.items():
+        y_pred = pipeline.predict(X_test)
 
-        print(
-            f"\nTraining {model_name}..."
+        # ----------------------------------------------------
+        # Metrics
+        # ----------------------------------------------------
+
+        accuracy = accuracy_score(y_test, y_pred)
+
+        precision = precision_score(
+            y_test,
+            y_pred,
+            zero_division=0,
+        )
+
+        recall = recall_score(
+            y_test,
+            y_pred,
+            zero_division=0,
+        )
+
+        f1 = f1_score(
+            y_test,
+            y_pred,
+            zero_division=0,
         )
 
         # ----------------------------------------------------
-        # Start MLflow Run
+        # Log parameters
         # ----------------------------------------------------
 
-        with mlflow.start_run(
-            run_name=model_name
-        ):
+        mlflow.log_param(
+            "model_name",
+            model_name,
+        )
 
-            # ------------------------------------------------
-            # Parameters
-            # ------------------------------------------------
+        mlflow.log_param(
+            "test_size",
+            0.2,
+        )
 
-            mlflow.log_param(
-                "model_name",
-                model_name
-            )
+        mlflow.log_param(
+            "random_state",
+            42,
+        )
 
-            mlflow.log_param(
-                "test_size",
-                0.2
-            )
+        mlflow.log_param(
+            "tfidf_max_features",
+            10000,
+        )
 
-            mlflow.log_param(
-                "random_state",
-                42
-            )
+        # ----------------------------------------------------
+        # Log model parameters
+        # ----------------------------------------------------
 
-            mlflow.log_param(
-                "tfidf_max_features",
-                10000
-            )
+        for param_name, param_value in classifier.get_params().items():
 
-            # Log model-specific parameters
-            model_params = model.get_params()
-
-            for parameter, value in model_params.items():
-
+            # Avoid logging None values
+            if param_value is not None:
                 mlflow.log_param(
-                    parameter,
-                    value
+                    param_name,
+                    param_value,
                 )
 
-            # ------------------------------------------------
-            # Train
-            # ------------------------------------------------
+        # ----------------------------------------------------
+        # Log metrics
+        # ----------------------------------------------------
 
-            model.fit(
-                X_train_tfidf,
-                y_train
-            )
+        mlflow.log_metric(
+            "accuracy",
+            accuracy,
+        )
 
-            # ------------------------------------------------
-            # Evaluate
-            # ------------------------------------------------
+        mlflow.log_metric(
+            "precision",
+            precision,
+        )
 
-            metrics = evaluate_model(
-                model,
-                X_test_tfidf,
-                y_test,
-                model_name
-            )
+        mlflow.log_metric(
+            "recall",
+            recall,
+        )
 
-            # ------------------------------------------------
-            # Log Metrics
-            # ------------------------------------------------
+        mlflow.log_metric(
+            "f1_score",
+            f1,
+        )
 
-            mlflow.log_metric(
-                "accuracy",
-                metrics["accuracy"]
-            )
+        # ----------------------------------------------------
+        # Save classification report
+        # ----------------------------------------------------
 
-            mlflow.log_metric(
-                "precision",
-                metrics["precision"]
-            )
+        report_path = (
+            MODELS_DIR
+            / f"{model_name.replace(' ', '_')}_classification_report.txt"
+        )
 
-            mlflow.log_metric(
-                "recall",
-                metrics["recall"]
-            )
+        from sklearn.metrics import classification_report
 
-            mlflow.log_metric(
-                "f1_score",
-                metrics["f1_score"]
-            )
+        report = classification_report(
+            y_test,
+            y_pred,
+            target_names=["Fake", "True"],
+        )
 
-            # ------------------------------------------------
-            # Save classification report
-            # ------------------------------------------------
+        report_path.write_text(
+            report,
+            encoding="utf-8",
+        )
 
-            report_path = (
-                MODEL_DIR
-                / f"{model_name}_classification_report.txt"
-            )
+        mlflow.log_artifact(
+            str(report_path)
+        )
 
-            with open(
-                report_path,
-                "w",
-                encoding="utf-8"
-            ) as file:
 
-                file.write(
-                    metrics["classification_report"]
-                )
+        # ----------------------------------------------------
+        # Log COMPLETE pipeline to MLflow
+        # ----------------------------------------------------
 
-            # ------------------------------------------------
-            # Log Classification Report
-            # ------------------------------------------------
+        mlflow.sklearn.log_model(
+            pipeline,
+            name="model",
+        )
 
-            mlflow.log_artifact(
-                report_path
-            )
+        # ----------------------------------------------------
+        # Save local copy
+        # ----------------------------------------------------
 
-            # ------------------------------------------------
-            # Log trained model
-            # ------------------------------------------------
+        local_model_path = (
+            MODELS_DIR
+            / f"{model_name.replace(' ', '_')}_pipeline.pkl"
+        )
 
-            mlflow.sklearn.log_model(
-                model,
-                name="model"
-            )
+        joblib.dump(
+            pipeline,
+            local_model_path,
+        )
 
-            # ------------------------------------------------
-            # Save model locally
-            # ------------------------------------------------
+        # ----------------------------------------------------
+        # Store result
+        # ----------------------------------------------------
 
-            filename = (
-                model_name
-                .lower()
-                .replace(" ", "_")
-            )
+        results.append({
+            "model": model_name,
+            "accuracy": accuracy,
+            "precision": precision,
+            "recall": recall,
+            "f1_score": f1,
+            "run_id": mlflow.active_run().info.run_id,
+        })
 
-            model_path = (
-                MODEL_DIR
-                / f"{filename}.pkl"
-            )
-
-            joblib.dump(
-                model,
-                model_path
-            )
-
-            print(
-                f"Model saved to: {model_path}"
-            )
-
-            # ------------------------------------------------
-            # Log run information
-            # ------------------------------------------------
-
-            run_id = mlflow.active_run().info.run_id
-
-            print(
-                f"MLflow Run ID: {run_id}"
-            )
-
-            all_results[model_name] = {
-                "run_id": run_id,
-                "metrics": metrics
-            }
-
-    # --------------------------------------------------------
-    # Save vectorizer
-    # --------------------------------------------------------
-
-    vectorizer_path = (
-        MODEL_DIR
-        / "tfidf_vectorizer.pkl"
-    )
-
-    joblib.dump(
-        vectorizer,
-        vectorizer_path
-    )
-
-    print(
-        f"\nVectorizer saved to: {vectorizer_path}"
-    )
-
-    # --------------------------------------------------------
-    # Model Comparison
-    # --------------------------------------------------------
-
-    comparison = {}
-
-    for model_name, result in all_results.items():
-
-        comparison[model_name] = {
-            "accuracy":
-                result["metrics"]["accuracy"],
-
-            "precision":
-                result["metrics"]["precision"],
-
-            "recall":
-                result["metrics"]["recall"],
-
-            "f1_score":
-                result["metrics"]["f1_score"],
-        }
-
-    results_df = pd.DataFrame(
-        comparison
-    ).T
-
-    print("\n")
-    print("=" * 70)
-    print("MODEL COMPARISON")
-    print("=" * 70)
-
-    print(results_df)
-
-    best_model = results_df[
-        "f1_score"
-    ].idxmax()
-
-    print("\nBest model:")
-    print(best_model)
-
-    print(
-        f"Best F1 Score: "
-        f"{results_df.loc[best_model, 'f1_score']:.4f}"
-    )
+        print(
+            f"Accuracy : {accuracy:.6f}"
+        )
+        print(
+            f"Precision: {precision:.6f}"
+        )
+        print(
+            f"Recall   : {recall:.6f}"
+        )
+        print(
+            f"F1 Score : {f1:.6f}"
+        )
 
 
 # ============================================================
-# Entry Point
+# Compare models
 # ============================================================
 
-if __name__ == "__main__":
-    train_models()
+results_df = pd.DataFrame(results)
+
+results_df = results_df.sort_values(
+    by="f1_score",
+    ascending=False,
+)
+
+print("\n==============================")
+print("MODEL COMPARISON")
+print("==============================")
+
+print(
+    results_df.to_string(
+        index=False
+    )
+)
+
+print("\nBest model:")
+
+print(
+    results_df.iloc[0]
+)
+
+# ============================================================
+# Automatic Model Registration
+# ============================================================
+
+best_model = results_df.iloc[0]
+
+best_run_id = best_model["run_id"]
+best_f1 = float(best_model["f1_score"])
+best_model_name = best_model["model"]
+
+print("\n==============================")
+print("AUTOMATIC MODEL REGISTRATION")
+print("==============================")
+
+print(f"Best model : {best_model_name}")
+print(f"F1 Score   : {best_f1:.6f}")
+print(f"Run ID     : {best_run_id}")
+
+
+# ------------------------------------------------------------
+# Check current champion
+# ------------------------------------------------------------
+
+try:
+
+    champion_model = mlflow_client.get_model_version_by_alias(
+        MODEL_NAME,
+        CHAMPION_ALIAS,
+    )
+
+    champion_run = mlflow_client.get_run(
+        champion_model.run_id
+    )
+
+    champion_f1 = champion_run.data.metrics.get(
+        "f1_score",
+        0.0,
+    )
+
+    print("\nCurrent champion:")
+    print(f"Version    : {champion_model.version}")
+    print(f"F1 Score   : {champion_f1:.6f}")
+
+except Exception:
+
+    champion_model = None
+    champion_f1 = 0.0
+
+    print("\nNo existing champion model found.")
+
+
+# ------------------------------------------------------------
+# Promote only if better
+# ------------------------------------------------------------
+
+if best_f1 > champion_f1:
+
+    print("\nNew model is better.")
+    print("Registering new model...")
+
+    model_uri = f"runs:/{best_run_id}/model"
+
+    registered_model = mlflow.register_model(
+        model_uri=model_uri,
+        name=MODEL_NAME,
+    )
+
+    new_version = registered_model.version
+
+    print(
+        f"Registered version: {new_version}"
+    )
+
+    # Assign champion alias
+    mlflow_client.set_registered_model_alias(
+        name=MODEL_NAME,
+        alias=CHAMPION_ALIAS,
+        version=new_version,
+    )
+
+    print(
+        f"Champion → Version {new_version}"
+    )
+
+else:
+
+    print("\nCurrent champion is better or equal.")
+    print("Keeping the current champion.")
