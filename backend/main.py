@@ -1,38 +1,53 @@
 from fastapi import FastAPI
-from nltk import probability
 from schemas import NewsRequest
 from database import prediction_collection
-import pickle
+
 from datetime import datetime
+
+import mlflow
+import mlflow.sklearn
 
 from url_extractor import extract_news_from_url
 from credibility import get_domain
 from credibility import check_source_credibility
 
+
 app = FastAPI()
 
-# Load trained model
-model = pickle.load(open("../models/model.pkl", "rb"))
 
-# Load vectorizer
-vectorizer = pickle.load(open("../models/vectorizer.pkl", "rb"))
+# ============================================================
+# MLflow Configuration
+# ============================================================
+
+mlflow.set_tracking_uri("sqlite:///"
+"../mlflow.db")
+
+MODEL_NAME = "NewsGuard-Fake-News-Classifier"
+MODEL_ALIAS = "champion"
+
+MODEL_URI = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
 
 
-@app.get("/")
-def home():
-    return {
-        "message": "Fake News Detection API Running"
-    }
+# ============================================================
+# Load Champion Model
+# ============================================================
+
+print("Loading MLflow champion model...")
+
+model = mlflow.sklearn.load_model(MODEL_URI)
+
+print("Champion model loaded successfully!")
 
 
-@app.post("/predict")
-def predict_news(text: str):
+# ============================================================
+# Helper function
+# ============================================================
 
-    vector = vectorizer.transform([text])
+def predict_text(text: str):
 
-    prediction = model.predict(vector)[0]
+    prediction = model.predict([text])[0]
 
-    probabilities = model.predict_proba(vector)[0]
+    probabilities = model.predict_proba([text])[0]
 
     confidence = float(max(probabilities))
 
@@ -41,10 +56,37 @@ def predict_news(text: str):
     else:
         final_prediction = "Fake News"
 
-    #save prediction to database
+    return final_prediction, confidence
+
+
+# ============================================================
+# Home
+# ============================================================
+
+@app.get("/")
+def home():
+
+    return {
+        "message": "Fake News Detection API Running",
+        "model": MODEL_NAME,
+        "model_alias": MODEL_ALIAS
+    }
+
+
+# ============================================================
+# Text Prediction
+# ============================================================
+
+@app.post("/predict")
+def predict_news(text: str):
+
+    final_prediction, confidence = predict_text(text)
+
+    # Save prediction to database
     prediction_collection.insert_one({
         "text": text,
         "prediction": final_prediction,
+        "confidence": confidence,
         "timestamp": datetime.utcnow()
     })
 
@@ -53,6 +95,11 @@ def predict_news(text: str):
         "confidence": confidence
     }
 
+
+# ============================================================
+# URL Prediction
+# ============================================================
+
 @app.post("/predict_url")
 def predict_url(url: str):
 
@@ -60,13 +107,7 @@ def predict_url(url: str):
 
     text = article["text"]
 
-    vector = vectorizer.transform([text])
-
-    prediction = model.predict(vector)[0]
-
-    probabilities = model.predict_proba(vector)[0]
-
-    confidence = float(max(probabilities))
+    final_prediction_ml, confidence = predict_text(text)
 
     ml_score = confidence * 100
 
@@ -76,7 +117,9 @@ def predict_url(url: str):
 
     credibility_score = credibility["score"]
 
+    # ========================================================
     # HYBRID FINAL SCORE
+    # ========================================================
 
     final_score = (
         (ml_score * 0.6)
@@ -84,7 +127,9 @@ def predict_url(url: str):
         (credibility_score * 0.4)
     )
 
+    # ========================================================
     # FINAL DECISION
+    # ========================================================
 
     if final_score >= 70:
         final_prediction = "Real News"
