@@ -1,15 +1,15 @@
 from fastapi import FastAPI
-from schemas import NewsRequest
-from database import prediction_collection
+from backend.schemas import NewsRequest
+from backend.database import prediction_collection
 
 from datetime import datetime
 
 import mlflow
 import mlflow.sklearn
 
-from url_extractor import extract_news_from_url
-from credibility import get_domain
-from credibility import check_source_credibility
+from backend.url_extractor import extract_news_from_url
+from backend.credibility import get_domain
+from backend.credibility import check_source_credibility
 
 
 app = FastAPI()
@@ -20,7 +20,7 @@ app = FastAPI()
 # ============================================================
 
 mlflow.set_tracking_uri("sqlite:///"
-"../mlflow.db")
+"./mlflow.db")
 
 MODEL_NAME = "NewsGuard-Fake-News-Classifier"
 MODEL_ALIAS = "champion"
