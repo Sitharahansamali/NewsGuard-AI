@@ -1,0 +1,16 @@
+services:
+
+  backend:
+    image: newsguard-api:latest
+    container_name: newsguard-backend
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - ./mlflow.db:/app/mlflow.db
+      - ./mlruns:/app/mlruns
+
+    environment:
+      MLFLOW_TRACKING_URI: sqlite:///./mlflow.db
+
+    restart: unless-stopped
