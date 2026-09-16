@@ -10,7 +10,7 @@ MODEL_URI = (
 def test_champion_model_loads():
 
     mlflow.set_tracking_uri(
-        "sqlite:///./mlflow.db"
+        "http://127.0.0.1:5000"
     )
 
     model = mlflow.sklearn.load_model(
@@ -23,7 +23,7 @@ def test_champion_model_loads():
 def test_champion_model_predicts():
 
     mlflow.set_tracking_uri(
-        "sqlite:///./mlflow.db"
+        "http://127.0.0.1:5000"
     )
 
     model = mlflow.sklearn.load_model(
@@ -43,7 +43,7 @@ def test_champion_model_predicts():
 def test_champion_model_probability():
 
     mlflow.set_tracking_uri(
-        "sqlite:///./mlflow.db"
+        "http://127.0.0.1:5000"
     )
 
     model = mlflow.sklearn.load_model(

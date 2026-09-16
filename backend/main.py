@@ -3,7 +3,7 @@ from backend.schemas import NewsRequest
 from backend.database import prediction_collection
 
 from datetime import datetime
-
+import os
 import mlflow
 import mlflow.sklearn
 
@@ -19,7 +19,10 @@ app = FastAPI()
 # MLflow Configuration
 # ============================================================
 
-MLFLOW_TRACKING_URI = "http://mlflow:5000"
+MLFLOW_TRACKING_URI = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    "http://127.0.0.1:5000"
+)
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_registry_uri(MLFLOW_TRACKING_URI)
