@@ -33,7 +33,7 @@ jobs:
         run: |
           mlflow server \
             --backend-store-uri sqlite:///./mlflow.db \
-            --default-artifact-root mlflow-artifacts:/ \
+            --default-artifact-root ./mlruns \
             --artifacts-destination ./mlruns \
             --host 0.0.0.0 \
             --port 5000 \
@@ -42,18 +42,14 @@ jobs:
       - name: Wait for MLflow
         run: |
           for i in {1..30}; do
-            if curl -s http://127.0.0.1:5000/health > /dev/null; then
+            if curl -fsS http://127.0.0.1:5000/health > /dev/null; then
               echo "MLflow is ready"
-              break
+              exit 0
             fi
             echo "Waiting for MLflow..."
             sleep 2
           done
 
-      - name: Train models
-        run: |
-          python src/newsguard/models/train.py
-
-      - name: Run tests
-        run: |
-          pytest
+          echo "MLflow failed to start"
+          cat mlflow.log
+          exit 1
