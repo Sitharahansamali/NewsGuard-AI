@@ -40,3 +40,20 @@ services:
       - mlflow
 
     restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+    image: newsguard-frontend:latest
+    container_name: newsguard-frontend
+
+    ports:
+      - "8501:8501"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped  
+  
