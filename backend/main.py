@@ -19,14 +19,17 @@ app = FastAPI()
 # MLflow Configuration
 # ============================================================
 
-mlflow.set_tracking_uri("sqlite:///"
-"./mlflow.db")
+MLFLOW_TRACKING_URI = "http://mlflow:5000"
+
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+mlflow.set_registry_uri(MLFLOW_TRACKING_URI)
+
 
 MODEL_NAME = "NewsGuard-Fake-News-Classifier"
 MODEL_ALIAS = "champion"
 
 MODEL_URI = f"models:/{MODEL_NAME}@{MODEL_ALIAS}"
-
+print("MLflow tracking URI:", mlflow.get_tracking_uri())
 
 # ============================================================
 # Load Champion Model
