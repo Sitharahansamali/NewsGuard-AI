@@ -14,7 +14,10 @@ models/*.pkl
 data/processed/
 
 # MLflow
+mlruns_old/
 mlruns/
+mlflow.db
+mlflow_backup.db
 
 # Jupyter
 .ipynb_checkpoints/
