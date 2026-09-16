@@ -12,7 +12,7 @@ news = st.text_area("Enter News Text")
 if st.button("Predict News"):
 
     response = requests.post(
-        "http://127.0.0.1:8000/predict",
+        "http://backend:8000/predict",
         params={"text": news}
     )
 
@@ -39,7 +39,7 @@ url = st.text_input("Enter News URL")
 if st.button("Analyze URL"):
 
     response = requests.post(
-        "http://127.0.0.1:8000/predict_url",
+        "http://backend:8000/predict_url",
         params={"url": url}
     )
 

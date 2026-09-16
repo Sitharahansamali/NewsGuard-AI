@@ -1,0 +1,59 @@
+services:
+
+  mlflow:
+    image: python:3.11-slim
+    container_name: newsguard-mlflow
+
+    working_dir: /app
+
+    volumes:
+      - ./mlflow.db:/app/mlflow.db
+      - ./mlruns:/app/mlruns
+
+    environment:
+      MLFLOW_BACKEND_STORE_URI: sqlite:///./mlflow.db
+
+    command: sh -c "pip install --no-cache-dir mlflow==3.16.0 && mlflow server --backend-store-uri sqlite:///./mlflow.db --default-artifact-root mlflow-artifacts:/ --artifacts-destination ./mlruns --host 0.0.0.0 --port 5000 --workers 1 --allowed-hosts 'mlflow:5000,mlflow,localhost:5000,localhost,127.0.0.1:5000,127.0.0.1'"
+
+    ports:
+      - "5000:5000"
+
+    restart: unless-stopped
+
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    image: newsguard-api:latest
+    container_name: newsguard-backend
+
+    ports:
+      - "8000:8000"
+
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MONGO_URI: ${MONGO_URI}
+
+    depends_on:
+      - mlflow
+
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+    image: newsguard-frontend:latest
+    container_name: newsguard-frontend
+
+    ports:
+      - "8501:8501"
+
+    depends_on:
+      - backend
+
+    restart: unless-stopped  
+  
