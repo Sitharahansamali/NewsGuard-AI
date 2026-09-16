@@ -34,11 +34,11 @@ MODELS_DIR.mkdir(exist_ok=True)
 # MLflow configuration
 # ============================================================
 
-MLFLOW_TRACKING_URI = "sqlite:///./mlflow.db"
+MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
 
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-EXPERIMENT_NAME = "NewsGuard AI - Fake News Classification"
+EXPERIMENT_NAME = "NewsGuard AI - Docker"
 
 mlflow.set_experiment(EXPERIMENT_NAME)
 
